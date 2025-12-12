@@ -345,7 +345,6 @@ function validarRutCompleto(rutCompleto){
 // FUNCIÓN REGISTRAR
 // ----------------------------------------
 async function registrar() {
-
     const mensaje = document.getElementById("mensaje");
     const rutError = document.getElementById("rutError");
 
@@ -373,32 +372,29 @@ async function registrar() {
     mensaje.style.backgroundColor = "transparent";
     rutError.textContent = "";
 
-    // CAMPOS VACÍOS
+    // Validaciones de campos
     if (!nombre || !rut || !carrera || !telefono || !email || !pass || !confirmPass) {
         showError("Complete todos los campos, incluyendo la confirmación de contraseña.");
         return;
     }
 
-    // VALIDAR CONTRASEÑAS
     if (!checkPasswordMatch()) {
         showError("Las contraseñas ingresadas no coinciden.");
         return;
     }
 
-    // VALIDAR RUT
     const rutVal = validarRutCompleto(rut);
     if (!rutVal.ok) {
         rutError.textContent = rutVal.msg;
         return;
     }
 
-    // VALIDAR TELÉFONO
     if (!/^\+569\d{8}$/.test(telefono)) {
         showError("Teléfono inválido. Use +569XXXXXXXX");
         return;
     }
 
-    // VALIDAR DOMINIO CORREO
+    // Validar dominio de correo
     const dominiosPermitidos = [
         "@gmail.com",
         "@hotmail.com",
@@ -407,16 +403,19 @@ async function registrar() {
         "@inacapmail.cl",
         "@inacap.cl"
     ];
-
-    const dominioValido = dominiosPermitidos.some(d => email.endsWith(d));
-
-    if (!dominioValido) {
+    if (!dominiosPermitidos.some(d => email.endsWith(d))) {
         showError("El correo ingresado no es válido o no está permitido.");
         return;
     }
 
-    // CREAR EN AUTH
-    const { error: e1 } = await supabaseClient.auth.signUp({ email, password: pass });
+    // CREAR USUARIO EN AUTH CON user_metadata
+    const { error: e1 } = await supabaseClient.auth.signUp({
+        email,
+        password: pass,
+        options: {
+            data: { nombre, rut, carrera, telefono }
+        }
+    });
 
     if (e1) {
         if (e1.message.includes("already registered")) {
@@ -426,16 +425,8 @@ async function registrar() {
         }
         return;
     }
-    if (e2) {
-        if (e2.code === '23505') {
-            showError("El RUT o correo ya están en uso.");
-        } else {
-            showError(`Error al guardar perfil: ${e2.message}`);
-        }
-        return;
-    }
 
-    showSuccess("Registro exitoso. Revisa tu correo para confirmar.");
+    showSuccess("Registro exitoso. Revisa tu correo para confirmar tu cuenta.");
 }
 
 // ----------------------------------------
@@ -449,12 +440,10 @@ function validarRutFormatoYDigito(rut) {
     const dv = dvIngresado.toUpperCase();
 
     let suma = 0, multiplicador = 2;
-
     for (let i = cuerpo.length - 1; i >= 0; i--) {
         suma += parseInt(cuerpo[i], 10) * multiplicador;
         multiplicador = multiplicador === 7 ? 2 : multiplicador + 1;
     }
-
     const resto = 11 - (suma % 11);
     const dvCalculado = resto === 11 ? "0" : resto === 10 ? "K" : String(resto);
 
@@ -499,7 +488,7 @@ async function login() {
         });
 
         if (error || !data) {
-            showError("El RUT no está registrado.");
+            showError("El RUT no está registrado o no ha confirmado el correo.");
             return;
         }
 
@@ -512,11 +501,8 @@ async function login() {
     });
 
     if (error) {
-        if (
-            error.message.includes("Invalid login credentials") ||
-            error.message.includes("Email not confirmed")
-        ) {
-            showError("Credenciales incorrectas o correo no confirmado.");
+        if (error.message.includes("Email not confirmed")) {
+            showError("Correo no confirmado. Revisa tu bandeja de entrada.");
         } else {
             showError(`Error al iniciar sesión: ${error.message}`);
         }
