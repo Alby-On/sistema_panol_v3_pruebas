@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Panel de Reportes de Uso del Pañol</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+/* Variables de Color */
+:root {
+--color-primary: #004d99; /* Azul institucional */
+--color-secondary: #28a745; /* Verde */
+--color-menu: #6c757d; /* Gris para el botón de menú */
+--color-danger: #dc3545; /* Rojo para acentuar */
+--color-background: #f4f6f9; /* Fondo muy claro */
+--color-card: #ffffff;
+--color-text: #333333;
+--shadow-subtle: 0 4px 12px rgba(0, 0, 0, 0.08); /* Sombra más suave */
+}
+
+/* Estilos Generales y Contenedor */
+body {
+font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+background: var(--color-background);
+color: var(--color-text);
+margin: 0;
+padding: 0;
+}
+/* Título Principal */
+h2 {
+text-align: center;
+color: var(--color-primary);
+margin: 20px 0 10px;
+font-size: 2.5em;
+font-weight: 800;
+}
+
+/* CONTENEDOR DEL ENCABEZADO (BOTÓN Y ALINEACIÓN) */
+.dashboard-header {
+max-width: 1200px;
+margin: 0 auto;
+padding: 0 20px 25px 20px;
+display: flex;
+justify-content: space-between;
+align-items: center; /* Asegura alineación vertical */
+}
+/* Estilos del botón Imprimir */
+.print-button {
+background-color: var(--color-secondary);
+color: white;
+border: none;
+padding: 12px 25px;
+border-radius: 8px;
+cursor: pointer;
+font-size: 1.05em;
+font-weight: 700;
+box-shadow: 0 3px 8px rgba(40, 167, 69, 0.4);
+transition: all 0.2s ease;
+}
+
+.print-button:hover {
+background-color: #1e7e34;
+transform: translateY(-1px);
+box-shadow: 0 5px 10px rgba(40, 167, 69, 0.5);
+}
+
+/* Botón Volver al Menú */
+.menu-button {
+background-color: var(--color-menu);
+color: white;
+border: none;
+padding: 12px 25px;
+border-radius: 8px;
+cursor: pointer;
+font-size: 1.05em;
+font-weight: 700;
+box-shadow: 0 3px 8px rgba(108, 117, 125, 0.4);
+transition: all 0.2s ease;
+text-decoration: none;
+display: flex;
+align-items: center;
+gap: 5px;
+}
+
+.menu-button:hover {
+background-color: #5a6268;
+transform: translateY(-1px);
+box-shadow: 0 5px 10px rgba(108, 117, 125, 0.5);
+}
+
+/* Grid del Dashboard: Layout vertical (una card por fila) */
+.dashboard-grid {
+display: grid;
+grid-template-columns: 1fr;
+gap: 25px;
+padding: 0 20px 20px 20px;
+max-width: 1200px;
+margin: 0 auto;
+}
+/* Contenedor de cada Card/Gráfico */
+.chart-container {
+background: var(--color-card);
+padding: 20px;
+border-radius: 12px;
+box-shadow: var(--shadow-subtle);
+height: 600px;
+display: flex;
+flex-direction: column;
+transition: transform 0.3s ease;
+}
+
+/* Reducimos un poco la altura de la tarjeta de comentarios, ya que no tiene el área de entrada */
+.chart-container:nth-child(5) { 
+    height: 450px; 
+}
+
+
+.chart-container:hover {
+transform: translateY(-3px);
+box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+/* Ajustes de Canvas y Altura */
+.chart-container canvas {
+flex-grow: 1;
+max-height: 100%;
+min-height: 0;
+}
+
+/* Títulos de las Tarjetas */
+h3 {
+color: var(--color-primary);
+font-size: 1.3em;
+border-bottom: 2px solid #e0e0e0;
+padding-bottom: 10px;
+margin-bottom: 15px;
+font-weight: 700;
+}
+
+/* ESTILOS PARA LA CARD DE COMENTARIOS DINÁMICA */
+.comments-content {
+flex-grow: 1;
+overflow-y: auto;
+padding-right: 10px;
+}
+.comments-list {
+list-style: none;
+padding: 0;
+margin: 0;
+}
+.comments-list li {
+padding: 12px 0;
+border-bottom: 1px dashed #e0e0e0;
+font-size: 0.95em;
+line-height: 1.5;
+}
+.comments-list li strong {
+color: var(--color-primary);
+font-weight: 600;
+display: block;
+margin-bottom: 4px;
+}
+.comments-list li .comment-date {
+font-size: 0.8em;
+color: #888;
+float: right;
+}
+.comments-list li:last-child {
+border-bottom: none;
+}
+/* Estilos de la zona de ingreso de comentario (ELIMINADOS) */
+
+/* Ajustes para móviles */
+@media (max-width: 768px) {
+h2 { font-size: 2em; margin-top: 15px; }
+.dashboard-grid { 
+    grid-template-columns: 1fr; 
+    padding: 10px; 
+    gap: 15px; 
+}
+.chart-container { 
+    height: 450px; 
+}
+.chart-container:nth-child(5) { /* Asegura que la card de comentarios se vea bien en móvil */
+    height: 350px; 
+}
+.dashboard-header { justify-content: space-around; padding-bottom: 15px; }
+}
+
+/* Oculta el botón de impresión al imprimir el documento */
+@media print {
+.dashboard-header {
+display: none;
+}
+}
+</style>
+</head>
+<body>
+<h2>📈 Panel de Reportes de Uso del Pañol</h2>
+<div class="dashboard-header">
+<a href="menu.html" class="menu-button">
+⬅️ Volver al Menú
+</a>
+<button class="print-button" onclick="window.print()">
+🖨️ Imprimir reporte
+</button>
+</div>
+<div class="dashboard-grid">
+    
+<div class="chart-container" style="height: 180px;">
+    <h3>👥 Total Usuarios Registrados</h3>
+    
+    <div 
+        id="usuariosCount" 
+        style="
+            text-align: center; 
+            display: flex; 
+            flex-direction: column; 
+            flex-grow: 1; 
+            justify-content: center; /* Centrado vertical */
+        "
+    >
+        <p style="font-size: 4em; color: var(--color-primary); font-weight: 800; margin: 0;">0</p>
+        <p style="font-size: 1.2em; color: var(--color-text); margin: 0;">Total en el Sistema</p>
+    </div>
+</div>
+
+<div class="chart-container">
+    <h3>🥇 Top 10 Docentes Solicitantes</h3>
+    <canvas id="docentesChart"></canvas>
+</div>
+
+<div class="chart-container">
+    <h3>🏛️ Proporción de Solicitudes por Carrera</h3>
+    <canvas id="carrerasChart"></canvas>
+</div>
+
+<div class="chart-container">
+    <h3>🔩 Materiales Más Demandados (Unidades Totales)</h3>
+    <canvas id="materialesChart"></canvas>
+</div>
+
+<div class="chart-container">
+    <h3>📚 Consumo por Asignatura</h3>
+    <canvas id="asignaturasChart"></canvas>
+</div>
+
+<div class="chart-container">
+    <h3>💬 Registro de Novedades del Pañol</h3>
+    <div id="commentsList" class="comments-content">
+        <p id="loadingMessage" style="text-align: center; color: #888;">Cargando novedades...</p>
+    </div>
+</div>
+
+</div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+   
+<script>
+    // --- IMPORTACIONES Y CONFIGURACIÓN DE SUPABASE ---
+    
+    // ** ATENCIÓN: DEBES REEMPLAZAR ESTOS VALORES CON LOS TUYOS DE SUPABASE **
+    const SUPABASE_URL = "https://jwcgiuhdugjunndfpdjr.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp3Y2dpdWhkdWdqdW5uZGZwZGpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI5NTA2NTQsImV4cCI6MjA3ODUyNjY1NH0.llknOTpK1hFMDOjdyDUKUFuiyr0NwwJzNv6YdJbBsRY";
+
+    // Inicializar Supabase Client
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // Colores para los gráficos (se mantienen)
+    const primaryColor = 'rgb(0, 77, 153)';
+    const secondaryColor = 'rgb(40, 167, 69)';
+    const dangerColor = 'rgb(220, 53, 69)';    
+
+    // --- LÓGICA DE COMENTARIOS (Novedades de Entrega) ---
+
+    async function setupCommentListener() {
+        // ... (código de setupCommentListener es correcto y se mantiene) ...
+        const commentsListEl = document.getElementById('commentsList');
+        const loadingMessageEl = document.getElementById('loadingMessage');
+        loadingMessageEl.textContent = "Cargando novedades de entrega...";
+
+        try {
+            const { data: solicitudes, error } = await supabase
+                .from('solicitudes')
+                .select(`
+                    docente,
+                    fecha_entrega,
+                    comentario_entrega
+                `)
+                .not('comentario_entrega', 'is', null)
+                .order('fecha_entrega', { ascending: false })
+                .limit(5);
+
+            if (error) throw error;
+
+            if (solicitudes.length === 0) {
+                commentsListEl.innerHTML = `<p style="text-align: center; color: #888;">Aún no hay novedades registradas en las entregas.</p>`;
+                return;
+            }
+
+            const commentsHtml = solicitudes.map(data => {
+                const userDisplay = data.docente || 'Docente Desconocido';
+                const date = data.fecha_entrega ?
+                    new Date(data.fecha_entrega).toLocaleString('es-ES', {  
+                        day: '2-digit', month: '2-digit', year: 'numeric',  
+                        hour: '2-digit', minute: '2-digit'  
+                    }) :
+                    'Fecha Desconocida';
+
+                // Usamos una función simple para escapar el contenido y evitar XSS
+                const escapeHTML = (str) => String(str).replace(/[&<>"']/g, (m) => ({
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#39;'
+                }[m]));
+                
+                const commentContent = data.comentario_entrega ? escapeHTML(data.comentario_entrega) : '';
+
+                return `
+                    <li>
+                        <strong>${userDisplay}</strong>
+                        <span class="comment-date">${date}</span>
+                        <div>${commentContent}</div>
+                    </li>
+                `;
+            }).join('');
+
+            commentsListEl.innerHTML = `<ul class="comments-list">${commentsHtml}</ul>`;
+            loadingMessageEl.textContent = "";
+
+        } catch (error) {
+            console.error("Error al cargar novedades de Supabase:", error);
+            loadingMessageEl.textContent = "";
+            commentsListEl.innerHTML = `<p style="color: ${dangerColor};">Error al cargar novedades: ${error.message || error.details}</p>`;
+        }
+    }
+
+
+    // --- LÓGICA DE GRÁFICOS (Extrayendo datos de Supabase) ---
+    
+    async function cargarReportesEstadisticos() {
+        try {
+
+            // 1. Conteo de usuarios
+            const { data: totalUsuarios, error: errUser } = await supabase.rpc('get_total_usuarios');
+            if (errUser) throw new Error("Error en Total Usuarios: " + errUser.message);
+
+            // 2. Top Docentes
+            const { data: docentes, error: errDoc } = await supabase.rpc('get_top_docentes');
+            if (errDoc) throw new Error("Error en Top Docentes: " + errDoc.message);
+
+            // 3. Solicitudes por Carrera
+            const { data: carreras, error: errCarr } = await supabase.rpc('get_solicitudes_por_carrera');
+            if (errCarr) throw new Error("Error en Solicitudes por Carrera: " + errCarr.message);
+
+            // 4. Materiales Demandados
+            const { data: materiales, error: errMat } = await supabase.rpc('get_top_materiales', { material_filtro: null });
+            if (errMat) throw new Error("Error en Materiales Demandados: " + errMat.message);
+
+            // 5. Consumo por Asignatura
+            // INCLUYE EL LÍMITE: 10 PARA OBTENER EL TOP 10 Y RESOLVER EL ERROR DE AMBIGÜEDAD DE LA FUNCIÓN RPC
+            const { data: asignaturas, error: errAsig } = await supabase.rpc('get_consumo_por_asignatura', { 
+                asignatura_filtro: null,
+                limite: 10 // <-- CAMBIO APLICADO
+            }); 
+            if (errAsig) throw new Error("Error en Consumo por Asignatura: " + errAsig.message);
+
+            return {
+                docentes: docentes || [],
+                carreras: carreras || [],
+                materiales: materiales || [],
+                asignaturas: asignaturas || [],
+                usuarios: totalUsuarios[0] || { total_usuarios: 0 }, 
+            };
+
+        } catch (error) {
+            console.error("Error al obtener datos de Supabase:", error);
+            const errorContainer = document.getElementById('docentesChart') ? document.getElementById('docentesChart').parentNode : null;
+            if(errorContainer) {
+                // Solo muestra un error en una tarjeta si falla la carga general de datos
+                errorContainer.innerHTML = `<p style="color: ${dangerColor}; text-align: center;">Error de BD: ${error.message}</p>`;
+            }
+            return { 
+                docentes: [], 
+                carreras: [], 
+                materiales: [], 
+                asignaturas: [],
+                usuarios: { total_usuarios: 0 } // Devuelve un valor por defecto
+            };
+        }
+    }
+
+    async function renderizarReportes() {
+        if (typeof Chart === 'undefined') {
+            const errorContainer = document.querySelector('.main-dashboard') || document.body;
+            errorContainer.innerHTML = `<p style="color: ${dangerColor}; text-align: center;">ERROR: La librería Chart.js no se cargó correctamente. Revisa el CDN.</p>`;
+            return;
+        }
+
+        const reportes = await cargarReportesEstadisticos(); // <-- Solo una llamada aquí
+
+        // 0. Conteo de Usuarios (Nueva Lógica)
+        const usuariosCountEl = document.getElementById('usuariosCount');
+        if (usuariosCountEl) {
+            // Asegura que el valor sea un número antes de usar toLocaleString
+            const total = reportes.usuarios.total_usuarios ? 
+                                Number(reportes.usuarios.total_usuarios).toLocaleString('es-ES') : 
+                                '0';
+            usuariosCountEl.querySelector('p:first-child').textContent = total;
+        }
+
+        // 1. Docentes (Barra Horizontal)
+        if (document.getElementById('docentesChart')) {
+            const docentesLabels = reportes.docentes.map(d => d.docente);
+            const docentesData = reportes.docentes.map(d => d.conteo_solicitudes);
+            crearBarraHorizontal('docentesChart', 'Solicitudes', docentesLabels, docentesData, primaryColor, ' solicitudes');
+        }
+
+        // 2. Carreras (Dona con Total en el Centro)
+        if (document.getElementById('carrerasChart')) {
+            const carrerasLabels = reportes.carreras.map(c => c.carrera);
+            const carrerasData = reportes.carreras.map(c => c.conteo_solicitudes);
+            crearDona('carrerasChart', 'Solicitudes por Carrera', carrerasLabels, carrerasData);
+        }
+
+        // 3. Materiales (Barra Horizontal)
+        if (document.getElementById('materialesChart')) {
+            const materialesLabels = reportes.materiales.map(m => m.material);
+            const materialesData = reportes.materiales.map(m => m.veces_solicitado); 
+            crearBarraHorizontal('materialesChart', 'Veces Solicitado', materialesLabels, materialesData, secondaryColor, ' veces');
+        }
+
+        // 4. Asignaturas (Barra Horizontal)
+        if (document.getElementById('asignaturasChart')) {
+            const asignaturasLabels = reportes.asignaturas.map(a => a.asignatura);
+            const asignaturasData = reportes.asignaturas.map(a => a.numero_de_solicitudes);
+            crearBarraHorizontal('asignaturasChart', 'Número de Solicitudes', asignaturasLabels, asignaturasData, dangerColor, ' solicitudes');
+        }
+    }
+
+    // ... (El resto de las funciones de dibujo de gráficos se mantienen sin cambios) ...
+    function crearBarraHorizontal(id, label, labels, data, color, unit) {
+        if (!document.getElementById(id)) return;
+
+        new Chart(document.getElementById(id), {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: label,
+                    data: data,
+                    backgroundColor: color,
+                    borderColor: color,
+                    borderWidth: 1,
+                    barPercentage: 0.8,
+                    categoryPercentage: 0.9,
+                }]
+            },
+            options: {
+                indexAxis: 'y', 
+                responsive: true, 
+                maintainAspectRatio: false, 
+                plugins: { 
+                    legend: { display: false }, 
+                    tooltip: { 
+                        callbacks: { 
+                            label: (context) => `${context.label}: ${context.parsed.x.toLocaleString('es-ES')}${unit}`
+                        } 
+                    }
+                },
+                scales: { 
+                    x: { 
+                        beginAtZero: true, 
+                        ticks: {
+                            callback: function(value) { return value.toLocaleString('es-ES'); }
+                        },
+                        grid: { display: true, drawBorder: false }
+                    },
+                    y: { 
+                        ticks: { autoSkip: false },
+                        grid: { display: false }
+                    } 
+                }
+            }
+        });
+    }
+
+    const totalDoughnutPlugin = {
+        id: 'totalDoughnut',
+        beforeDraw(chart) {
+            if (chart.config.type === 'doughnut') {
+                const { ctx, data, width, height } = chart;
+                ctx.save();
+                
+                const total = data.datasets[0].data.reduce((sum, value) => sum + value, 0);
+                const centerX = width / 2;
+                const centerY = (height / 2);  
+                
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                
+                ctx.fillStyle = primaryColor;
+                ctx.font = 'bold 28px Inter, sans-serif';
+                ctx.fillText(total.toLocaleString('es-ES'), centerX, centerY - 15);
+                
+                ctx.fillStyle = 'var(--color-text)';
+                ctx.font = '14px Inter, sans-serif';
+                ctx.fillText('Total Solicitudes', centerX, centerY + 15);
+                
+                ctx.restore();
+            }
+        }
+    };
+    
+    if (typeof Chart !== 'undefined') {
+        Chart.register(totalDoughnutPlugin);
+    }
+
+    function crearDona(id, label, labels, data) {
+        if (!document.getElementById(id)) return;
+        
+        new Chart(document.getElementById(id), {
+            type: 'doughnut',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: label,
+                    data: data,
+                    backgroundColor: ['#004d99', '#28a745', '#ffc107', '#17a2b8', '#dc3545', '#6c757d'],
+                    hoverOffset: 4
+                }]
+            },
+            options: {  
+                responsive: true,  
+                maintainAspectRatio: false,  
+                plugins: {
+                    legend: { position: 'bottom' },
+                    totalDoughnut: {}  
+                }
+            }
+        });
+    }
+    
+    // Ejecutar al cargar la página
+    document.addEventListener("DOMContentLoaded", () => {
+        if (!window.Chart) {
+            console.error("Chart.js no se cargó");
+            return;
+        }
+        renderizarReportes();
+        setupCommentListener();
+    });
+</script>
+    
+</body>
+</html>
