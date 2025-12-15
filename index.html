@@ -295,37 +295,25 @@
 // CONFIGURAR SUPABASE
 // ----------------------------------------
 const supabaseClient = supabase.createClient(
-    "https://jwcgiuhdugjunndfpdjr.supabase.co",
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp3Y2dpdWhkdWdqdW5uZGZwZGpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI5NTA2NTQsImV4cCI6MjA3ODUyNjY1NH0.llknOTpK1hFMDOjdyDUKUFuiyr0NwwJzNv6YdJbBsRY"
+  "https://jwcgiuhdugjunndfpdjr.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp3Y2dpdWhkdWdqdW5uZGZwZGpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI5NTA2NTQsImV4cCI6MjA3ODUyNjY1NH0.llknOTpK1hFMDOjdyDUKUFuiyr0NwwJzNv6YdJbBsRY"
 );
 
 // ----------------------------------------
-// REDIRECCIÓN DESPUÉS DE CONFIRMAR EMAIL
+// REDIRECCIÓN POST CONFIRMACIÓN EMAIL
 // ----------------------------------------
 async function handleRedirect() {
-    const hash = window.location.hash;
-    if (hash.includes("access_token")) {
-        const params = new URLSearchParams(hash.slice(1));
-        const access_token = params.get("access_token");
-        const refresh_token = params.get("refresh_token");
-
-        await supabaseClient.auth.setSession({ access_token, refresh_token });
-        window.location.href = "menu.html";
-    }
+  const hash = window.location.hash;
+  if (hash.includes("access_token")) {
+    const params = new URLSearchParams(hash.slice(1));
+    await supabaseClient.auth.setSession({
+      access_token: params.get("access_token"),
+      refresh_token: params.get("refresh_token"),
+    });
+    window.location.href = "menu.html";
+  }
 }
 handleRedirect();
-
-// ----------------------------------------
-// NAVEGACIÓN
-// ----------------------------------------
-function hideAll() {
-    welcomeBox.classList.add("hidden");
-    loginBox.classList.add("hidden");
-    registerBox.classList.add("hidden");
-}
-function showWelcome(){ hideAll(); welcomeBox.classList.remove("hidden"); }
-function showLogin(){ hideAll(); loginBox.classList.remove("hidden"); }
-function showRegister(){ hideAll(); registerBox.classList.remove("hidden"); }
 
 // ----------------------------------------
 // VALIDACIÓN RUT
@@ -333,236 +321,139 @@ function showRegister(){ hideAll(); registerBox.classList.remove("hidden"); }
 function limpiarRut(rut){ return rut.replace(/\./g,'').replace(/\s/g,'').toUpperCase(); }
 function dvT(rut){ let M=0,S=1; for(;rut;rut=Math.floor(rut/10)) S=(S+rut%10*(9-M++%6))%11; return S?S-1:'K'; }
 function validarRutCompleto(rutCompleto){
-    if(!rutCompleto) return {ok:false,msg:"Debe ingresar un RUT."};
-    const r = limpiarRut(rutCompleto);
-    if(!r.includes('-')) return {ok:false,msg:"El RUT debe contener guion."};
-    const [num,dv] = r.split('-');
-    if(!/^\d+$/.test(num)) return {ok:false,msg:"La parte numérica debe ser solo números."};
-    return {ok: dvT(parseInt(num,10)).toString() === dv.toUpperCase()};
+  if(!rutCompleto) return {ok:false,msg:"Debe ingresar un RUT."};
+  const r = limpiarRut(rutCompleto);
+  if(!r.includes('-')) return {ok:false,msg:"El RUT debe contener guion."};
+  const [num,dv] = r.split('-');
+  return {ok: dvT(parseInt(num,10)).toString() === dv.toUpperCase()};
 }
 
 // ----------------------------------------
-// FUNCIÓN REGISTRAR
+// REGISTRO (SOLO AUTH)
 // ----------------------------------------
 async function registrar() {
-    const mensaje = document.getElementById("mensaje");
-    const rutError = document.getElementById("rutError");
+  const nombre = regNombre.value.trim();
+  const rut = regRut.value.trim();
+  const carrera = regCarrera.value;
+  const telefono = regTelefono.value.trim();
+  const email = regEmail.value.trim();
+  const pass = regPass.value.trim();
+  const confirmPass = regConfirmPass.value.trim();
+  const mensaje = document.getElementById("mensaje");
 
-    const nombre = regNombre.value.trim();
-    const rut = regRut.value.trim();
-    const carrera = regCarrera.value;
-    const telefono = regTelefono.value.trim();
-    const email = regEmail.value.trim();
-    const pass = regPass.value.trim();
-    const confirmPass = regConfirmPass.value.trim();
+  if (!nombre || !rut || !carrera || !telefono || !email || !pass || !confirmPass) {
+    mensaje.textContent = "❌ Complete todos los campos";
+    return;
+  }
 
-    const showError = (text) => {
-        mensaje.textContent = `❌ ${text}`;
-        mensaje.style.color = "red";
-        mensaje.style.backgroundColor = "#ffdddd";
-    };
+  if (pass !== confirmPass) {
+    mensaje.textContent = "❌ Las contraseñas no coinciden";
+    return;
+  }
 
-    const showSuccess = (text) => {
-        mensaje.textContent = `✅ ${text}`;
-        mensaje.style.color = "green";
-        mensaje.style.backgroundColor = "#ddffdd";
-    };
+  const rutVal = validarRutCompleto(rut);
+  if (!rutVal.ok) {
+    mensaje.textContent = "❌ RUT inválido";
+    return;
+  }
 
-    mensaje.textContent = "";
-    mensaje.style.backgroundColor = "transparent";
-    rutError.textContent = "";
-
-    // Validaciones de campos
-    if (!nombre || !rut || !carrera || !telefono || !email || !pass || !confirmPass) {
-        showError("Complete todos los campos, incluyendo la confirmación de contraseña.");
-        return;
+  const { error } = await supabaseClient.auth.signUp({
+    email,
+    password: pass,
+    options: {
+      data: { nombre, rut, carrera, telefono }
     }
+  });
 
-    if (!checkPasswordMatch()) {
-        showError("Las contraseñas ingresadas no coinciden.");
-        return;
-    }
+  if (error) {
+    mensaje.textContent = `❌ ${error.message}`;
+    return;
+  }
 
-    const rutVal = validarRutCompleto(rut);
-    if (!rutVal.ok) {
-        rutError.textContent = rutVal.msg;
-        return;
-    }
-
-    if (!/^\+569\d{8}$/.test(telefono)) {
-        showError("Teléfono inválido. Use +569XXXXXXXX");
-        return;
-    }
-
-    // Validar dominio de correo
-    const dominiosPermitidos = [
-        "@gmail.com",
-        "@hotmail.com",
-        "@outlook.com",
-        "@icloud.com",
-        "@inacapmail.cl",
-        "@inacap.cl"
-    ];
-    if (!dominiosPermitidos.some(d => email.endsWith(d))) {
-        showError("El correo ingresado no es válido o no está permitido.");
-        return;
-    }
-
-    // CREAR USUARIO EN AUTH CON user_metadata
-    const { error: e1 } = await supabaseClient.auth.signUp({
-        email,
-        password: pass,
-        options: {
-            data: { nombre, rut, carrera, telefono }
-        }
-    });
-
-    if (e1) {
-        if (e1.message.includes("already registered")) {
-            showError("El correo ya está registrado. Intente iniciar sesión.");
-        } else {
-            showError(`Error al registrar usuario: ${e1.message}`);
-        }
-        return;
-    }
-
-    showSuccess("Registro exitoso. Revisa tu correo para confirmar tu cuenta.");
+  mensaje.textContent = "✅ Registro exitoso. Confirma tu correo.";
 }
 
 // ----------------------------------------
-// FUNCIÓN LOGIN
+// LOGIN + CREACIÓN DE PERFIL
 // ----------------------------------------
-function validarRutFormatoYDigito(rut) {
-    const re = /^\d{7,8}-[0-9kK]$/;
-    if (!re.test(rut)) return false;
-
-    const [cuerpo, dvIngresado] = rut.split("-");
-    const dv = dvIngresado.toUpperCase();
-
-    let suma = 0, multiplicador = 2;
-    for (let i = cuerpo.length - 1; i >= 0; i--) {
-        suma += parseInt(cuerpo[i], 10) * multiplicador;
-        multiplicador = multiplicador === 7 ? 2 : multiplicador + 1;
-    }
-    const resto = 11 - (suma % 11);
-    const dvCalculado = resto === 11 ? "0" : resto === 10 ? "K" : String(resto);
-
-    return dvCalculado === dv;
-}
-
 async function login() {
-    const input = loginEmail.value.trim();
-    const pass = loginPass.value.trim();
-    const msg = document.getElementById("loginMsg");
+  const input = loginEmail.value.trim();
+  const pass = loginPass.value.trim();
+  const msg = document.getElementById("loginMsg");
 
-    const showError = (text) => {
-        msg.textContent = `❌ ${text}`;
-        msg.style.color = "red";
-        msg.style.backgroundColor = "#ffdddd";
-    };
+  if (!input || !pass) {
+    msg.textContent = "❌ Complete los campos";
+    return;
+  }
 
-    const showSuccess = (text) => {
-        msg.textContent = `✅ ${text}`;
-        msg.style.color = "green";
-        msg.style.backgroundColor = "#ddffdd";
-    };
+  let email = input;
 
-    msg.textContent = "";
-    msg.style.backgroundColor = "transparent";
-
-    if (!input || !pass) {
-        showError("Complete todos los campos.");
-        return;
-    }
-
-    let emailParaLogin = input;
-
-    if (!input.includes("@")) {
-        if (!validarRutFormatoYDigito(input)) {
-            showError("RUT inválido. Ejemplo: 12345678-9");
-            return;
-        }
-
-        const { data, error } = await supabaseClient.rpc("buscar_email_por_rut", {
-            rut_input: input
-        });
-
-        if (error || !data) {
-            showError("El RUT no está registrado o no ha confirmado el correo.");
-            return;
-        }
-
-        emailParaLogin = data;
-    }
-
-    const { error } = await supabaseClient.auth.signInWithPassword({
-        email: emailParaLogin,
-        password: pass
+  if (!input.includes("@")) {
+    const { data } = await supabaseClient.rpc("buscar_email_por_rut", {
+      rut_input: input
     });
+    if (!data) {
+      msg.textContent = "❌ RUT no registrado";
+      return;
+    }
+    email = data;
+  }
 
-    if (error) {
-        if (error.message.includes("Email not confirmed")) {
-            showError("Correo no confirmado. Revisa tu bandeja de entrada.");
-        } else {
-            showError(`Error al iniciar sesión: ${error.message}`);
-        }
-        return;
+  const { data: authData, error } =
+    await supabaseClient.auth.signInWithPassword({ email, password: pass });
+
+  if (error) {
+    msg.textContent = error.message.includes("Email not confirmed")
+      ? "❌ Correo no confirmado"
+      : `❌ ${error.message}`;
+    return;
+  }
+
+  const user = authData.user;
+
+  // ----------------------------------------
+  // VERIFICAR / CREAR PERFIL
+  // ----------------------------------------
+  let { data: perfil } = await supabaseClient
+    .from("usuarios")
+    .select("*")
+    .eq("email", user.email)
+    .single();
+
+  if (!perfil) {
+    const meta = user.user_metadata;
+
+    const { error: insertError } = await supabaseClient
+      .from("usuarios")
+      .insert([{
+        email: user.email,
+        nombre: meta.nombre,
+        rut: meta.rut,
+        carrera: meta.carrera,
+        telefono: meta.telefono
+      }]);
+
+    if (insertError) {
+      await supabaseClient.auth.signOut();
+      msg.textContent = "❌ Error creando perfil. Contacte soporte.";
+      return;
     }
 
-    const { data: perfil } = await supabaseClient
-        .from("usuarios")
-        .select("*")
-        .eq("email", emailParaLogin)
-        .single();
+    const res = await supabaseClient
+      .from("usuarios")
+      .select("*")
+      .eq("email", user.email)
+      .single();
 
-    if (!perfil) {
-        showError("Usuario autenticado pero sin perfil. Contacte a soporte.");
-        await supabaseClient.auth.signOut();
-        return;
-    }
+    perfil = res.data;
+  }
 
-    localStorage.setItem("currentUser", JSON.stringify(perfil));
-    showSuccess(`Bienvenido, ${perfil.nombre}`);
-
-    setTimeout(() => window.location.href = "menu.html", 1200);
-}
-
-showWelcome();
-
-// ----------------------------------------
-// VISIBILIDAD DE CONTRASEÑAS
-// ----------------------------------------
-function toggleVisibility(fieldId, toggleElement) {
-    const field = document.getElementById(fieldId);
-    field.type = field.type === "password" ? "text" : "password";
-    toggleElement.textContent = field.type === "password" ? "👁️" : "🔒";
-}
-
-function checkPasswordMatch() {
-    const pass = regPass;
-    const confirmPass = regConfirmPass;
-    const msg = document.getElementById("password-match-message");
-
-    msg.textContent = "";
-    pass.classList.remove("password-mismatch");
-    confirmPass.classList.remove("password-mismatch");
-
-    if (confirmPass.value.trim().length > 0) {
-        if (pass.value !== confirmPass.value) {
-            msg.textContent = "❌ Las contraseñas no coinciden.";
-            msg.style.color = "var(--color-error)";
-            pass.classList.add("password-mismatch");
-            confirmPass.classList.add("password-mismatch");
-            return false;
-        } else {
-            msg.textContent = "✅ Contraseñas coinciden.";
-            msg.style.color = "var(--color-secondary)";
-            return true;
-        }
-    }
-    return true;
+  localStorage.setItem("currentUser", JSON.stringify(perfil));
+  msg.textContent = `✅ Bienvenido ${perfil.nombre}`;
+  setTimeout(() => window.location.href = "menu.html", 1000);
 }
 </script>
+
 
 </body>
 </html>
