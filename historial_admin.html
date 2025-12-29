@@ -6,7 +6,7 @@
     <title>Panel Histórico de Solicitudes</title>
 
     <style>
-        /* Variables de Color (Consistencia Institucional) */
+        /* Variables de Color */
         :root {
             --color-primary: #173753;
             --color-secondary: #28a745; 
@@ -36,12 +36,7 @@
             align-items: center;
         }
 
-        .header-title h1 {
-            font-size: 1.8em;
-            margin: 0;
-            font-weight: 700;
-        }
-
+        .header-title h1 { font-size: 1.8em; margin: 0; font-weight: 700; }
         .header-info { text-align: right; }
         .header-info h2 { font-size: 1.4em; margin: 0; font-weight: 600; color: white; }
         .header-info p { font-size: 0.9em; margin: 5px 0 0; color: #b0c4de; }
@@ -53,11 +48,8 @@
             padding: 0 20px;
         }
 
-        /* Botón Volver (Fuera de la tarjeta) */
-        .back-button-container {
-            margin-bottom: 20px;
-        }
-
+        /* Botón Volver */
+        .back-button-container { margin-bottom: 20px; }
         .btn-menu {
             background-color: #007bff;
             color: white;
@@ -66,12 +58,9 @@
             border-radius: 5px;
             text-decoration: none;
             font-weight: 600;
-            transition: background-color 0.2s;
             display: inline-flex;
             align-items: center;
         }
-
-        .btn-menu:hover { background-color: #0056b3; }
         .btn-menu span { margin-right: 8px; }
 
         /* Tarjeta de Contenido */
@@ -80,7 +69,6 @@
             padding: 30px;
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
-            box-sizing: border-box;
         }
 
         /* Filtros */
@@ -92,16 +80,13 @@
             background: #f8f9fa;
             padding: 15px;
             border-radius: 8px;
-            border: 1px solid #eee;
         }
-
         .filter-box input, .filter-box button {
             padding: 10px;
             font-size: 0.95em;
             border-radius: 5px;
             border: 1px solid var(--color-border);
         }
-
         .filter-box input[type="text"] { flex-grow: 2; min-width: 200px; }
         .filter-box button {
             background: var(--color-secondary);
@@ -109,7 +94,6 @@
             border: none;
             cursor: pointer;
             font-weight: 700;
-            padding: 10px 20px;
         }
 
         /* Tabla */
@@ -125,6 +109,53 @@
             text-transform: uppercase;
         }
         table td { padding: 12px; border-bottom: 1px solid #eee; font-size: 0.9em; }
+
+        /* Botón Ver Materiales (RESTABLECIDO) */
+        .btn-materiales {
+            background: var(--color-info);
+            color: white;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85em;
+            width: 100%;
+            max-width: 100px;
+            display: block;
+            text-align: center;
+        }
+        .btn-materiales:hover { background: #1377c0; }
+
+        /* Estilo del Modal (RESTABLECIDO) */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .modal-content {
+            background: white;
+            width: 100%;
+            max-width: 500px;
+            padding: 25px;
+            border-radius: 10px;
+        }
+        .modal-header {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: var(--color-primary);
+            margin-bottom: 15px;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .close-btn { color: #dc3545; cursor: pointer; font-size: 24px; }
 
         @media (max-width: 768px) {
             header { flex-direction: column; text-align: center; }
@@ -155,8 +186,8 @@
     <div class="container-card">
         <div class="filter-box">
             <input type="text" id="filtro-rut" placeholder="Buscar por RUT del Solicitante">
-            <input type="date" id="desde" title="Desde">
-            <input type="date" id="hasta" title="Hasta">
+            <input type="date" id="desde">
+            <input type="date" id="hasta">
             <button id="btn-buscar">🔍 Buscar / Filtrar</button>
         </div>
 
@@ -164,22 +195,38 @@
             <table>
                 <thead>
                     <tr>
-                        <th>ID</th>
-                        <th>RUT</th>
-                        <th>Nombre Solicitante</th>
-                        <th>Asignatura/Área</th>
-                        <th>Email</th>
-                        <th>F. Entrega</th>
-                        <th>Acciones</th>
+                        <th style="width: 5%;">ID</th>
+                        <th style="width: 15%;">RUT</th>
+                        <th style="width: 20%;">Nombre</th>
+                        <th style="width: 25%;">Asignatura/Área</th>
+                        <th style="width: 15%;">Email</th>
+                        <th style="width: 10%;">F. Entrega</th>
+                        <th style="width: 10%;">Acciones</th>
                     </tr>
                 </thead>
                 <tbody id="tabla-historial">
                     </tbody>
             </table>
         </div>
+    </div>
+</div>
 
-        <div id="sin-datos" style="display:none; text-align: center; padding: 30px; color: #666;">
-            ⚠️ No se encontraron resultados.
+<div class="modal" id="modal-materiales">
+    <div class="modal-content">
+        <div class="modal-header">
+            <span>Detalle de Materiales</span>
+            <span class="close-btn" onclick="document.getElementById('modal-materiales').style.display='none'">×</span>
+        </div>
+        <div class="tabla-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Material</th>
+                        <th>Cantidad</th>
+                    </tr>
+                </thead>
+                <tbody id="modal-body-materiales"></tbody>
+            </table>
         </div>
     </div>
 </div>
