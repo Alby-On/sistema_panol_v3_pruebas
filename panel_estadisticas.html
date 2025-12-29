@@ -8,9 +8,9 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
-            --color-primary: #004d99;
-            --color-secondary: #28a745;
-            --color-menu: #6c757d;
+            --color-primary: #173753; /* Azul oscuro institucional */
+            --color-secondary: #28a745; /* Verde */
+            --color-info: #007bff; /* Azul botón volver */
             --color-background: #f4f6f9;
             --color-card: #ffffff;
             --color-text: #333333;
@@ -24,9 +24,9 @@
             padding: 0;
         }
 
-        /* Banner Azul Corporativo */
+        /* --- BANNER SUPERIOR CORPORATIVO --- */
         header {
-            background-color: #173753;
+            background-color: var(--color-primary);
             color: white;
             padding: 20px 40px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -40,15 +40,19 @@
         .header-info h2 { font-size: 1.4em; margin: 0; font-weight: 600; color: white; }
         .header-info p { font-size: 0.9em; margin: 5px 0 0; color: #b0c4de; }
 
-        /* Contenedor de Botones */
+        /* --- CONTENEDOR DE BOTONES ACTUALIZADO --- */
         .dashboard-header {
+            max-width: 1400px;
+            margin: 0 auto;
             padding: 30px 40px 20px 40px;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
-        .print-button, .menu-button {
+        .menu-button {
+            background-color: var(--color-info);
+            color: white;
             border: none;
             padding: 12px 25px;
             border-radius: 8px;
@@ -56,17 +60,33 @@
             font-size: 1.05em;
             font-weight: 700;
             text-decoration: none;
-            color: white;
             display: flex;
             align-items: center;
             gap: 8px;
             transition: all 0.2s ease;
+            box-shadow: 0 3px 8px rgba(0, 123, 255, 0.3);
         }
 
-        .print-button { background-color: var(--color-secondary); }
-        .menu-button { background-color: var(--color-menu); }
+        .print-button {
+            background-color: var(--color-secondary);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.05em;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+            box-shadow: 0 3px 8px rgba(40, 167, 69, 0.3);
+        }
 
-        /* Grid de Contenido */
+        .menu-button:hover { background-color: #0056b3; transform: translateY(-1px); }
+        .print-button:hover { background-color: #1e7e34; transform: translateY(-1px); }
+
+        /* --- GRID DE CONTENIDO --- */
         .dashboard-grid {
             display: grid;
             grid-template-columns: 1fr;
@@ -107,7 +127,7 @@
         .comments-content { flex-grow: 1; overflow-y: auto; }
 
         @media (max-width: 768px) {
-            header, .dashboard-header { padding: 20px; flex-direction: column; text-align: center; }
+            header, .dashboard-header { padding: 20px; flex-direction: column; text-align: center; gap: 15px; }
             .dashboard-grid { padding: 15px; }
         }
 
@@ -120,7 +140,7 @@
 <body>
 
     <header>
-        <div class="header-title"><h1>Estadísticas de uso del pañol</h1></div>
+        <div class="header-title"><h1>Estadísticas de Uso del Pañol</h1></div>
         <div class="header-info">
             <h2>INACAP</h2>
             <p>Área Energía y Área Automatización, Electrónica y Robótica</p>
@@ -137,7 +157,7 @@
         <div class="chart-container stats-mini">
             <h3>👥 Usuarios Registrados</h3>
             <div id="usuariosCount" style="text-align: center; display: flex; flex-direction: column; justify-content: center; flex-grow: 1;">
-                <p style="font-size: 4em; color: var(--color-primary); font-weight: 800; margin: 0;">0</p>
+                <p style="font-size: 4em; color: #173753; font-weight: 800; margin: 0;">0</p>
                 <p style="font-size: 1.2em; color: var(--color-text); margin: 0;">Total en el Sistema</p>
             </div>
         </div>
