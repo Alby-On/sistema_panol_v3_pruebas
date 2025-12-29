@@ -9,8 +9,7 @@
     <style>
         :root {
             --color-primary: #173753; /* Azul oscuro institucional */
-            --color-secondary: #28a745; /* Verde */
-            --color-info: #007bff; /* Azul botón volver */
+            --color-secondary: #28a745; /* Verde para imprimir */
             --color-background: #f4f6f9;
             --color-card: #ffffff;
             --color-text: #333333;
@@ -18,13 +17,13 @@
         }
 
         body {
-            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             background: var(--color-background);
             margin: 0;
             padding: 0;
         }
 
-        /* --- BANNER SUPERIOR CORPORATIVO --- */
+        /* Banner Superior Corporativo */
         header {
             background-color: var(--color-primary);
             color: white;
@@ -40,7 +39,7 @@
         .header-info h2 { font-size: 1.4em; margin: 0; font-weight: 600; color: white; }
         .header-info p { font-size: 0.9em; margin: 5px 0 0; color: #b0c4de; }
 
-        /* --- CONTENEDOR DE BOTONES ACTUALIZADO --- */
+        /* Contenedor de Botones */
         .dashboard-header {
             max-width: 1400px;
             margin: 0 auto;
@@ -50,28 +49,34 @@
             align-items: center;
         }
 
-        .menu-button {
-            background-color: var(--color-info);
+        /* BOTÓN VOLVER (ESTILO EXACTO AL SOLICITADO) */
+        .btn-menu {
+            background-color: #007bff;
             color: white;
+            padding: 10px 15px;
             border: none;
-            padding: 12px 25px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 1.05em;
-            font-weight: 700;
+            border-radius: 5px;
             text-decoration: none;
-            display: flex;
+            font-weight: 600;
+            transition: background-color 0.2s;
+            display: inline-flex;
             align-items: center;
-            gap: 8px;
-            transition: all 0.2s ease;
-            box-shadow: 0 3px 8px rgba(0, 123, 255, 0.3);
         }
 
+        .btn-menu:hover {
+            background-color: #0056b3;
+        }
+
+        .btn-menu span {
+            margin-right: 8px;
+        }
+
+        /* Botón Imprimir */
         .print-button {
             background-color: var(--color-secondary);
             color: white;
             border: none;
-            padding: 12px 25px;
+            padding: 10px 25px;
             border-radius: 8px;
             cursor: pointer;
             font-size: 1.05em;
@@ -80,13 +85,11 @@
             align-items: center;
             gap: 8px;
             transition: all 0.2s ease;
-            box-shadow: 0 3px 8px rgba(40, 167, 69, 0.3);
         }
 
-        .menu-button:hover { background-color: #0056b3; transform: translateY(-1px); }
-        .print-button:hover { background-color: #1e7e34; transform: translateY(-1px); }
+        .print-button:hover { background-color: #1e7e34; }
 
-        /* --- GRID DE CONTENIDO --- */
+        /* Grid de Contenido */
         .dashboard-grid {
             display: grid;
             grid-template-columns: 1fr;
@@ -148,8 +151,12 @@
     </header>
 
     <div class="dashboard-header">
-        <a href="menu.html" class="menu-button"><span>⬅️</span> Volver al Menú</a>
-        <button class="print-button" onclick="window.print()"><span>🖨️</span> Imprimir reporte</button>
+        <a href="menu.html" class="btn-menu">
+            <span>&#x2190;</span> Volver al Menú
+        </a>
+        <button class="print-button" onclick="window.print()">
+            <span>🖨️</span> Imprimir reporte
+        </button>
     </div>
 
     <div class="dashboard-grid">
@@ -198,6 +205,9 @@
         </div>
 
     </div>
+
+</body>
+</html>
     
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
