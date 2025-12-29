@@ -168,7 +168,13 @@
                 <p style="font-size: 1.2em; color: var(--color-text); margin: 0;">Total en el Sistema</p>
             </div>
         </div>
-
+        <div class="chart-container stats-mini">
+    <h3>📝 Total Solicitudes Realizadas</h3>
+    <div id="solicitudesTotalCount" style="text-align: center; display: flex; flex-direction: column; justify-content: center; flex-grow: 1;">
+        <p style="font-size: 4em; color: #28a745; font-weight: 800; margin: 0;">0</p>
+        <p style="font-size: 1.2em; color: var(--color-text); margin: 0;">Registros en Base de Datos</p>
+    </div>
+    </div>
         <div class="chart-container">
             <h3>🥇 Top 10 Docentes Solicitantes</h3>
             <div class="canvas-wrapper">
@@ -292,13 +298,14 @@ async function setupCommentListener() {
 ================================ */
 async function cargarReportesEstadisticos() {
     try {
-        const [resUsuarios, resDocentes, resCarreras, resMateriales, resAsignaturas, resTopAsigMat] = await Promise.all([
+        const [resUsuarios, resDocentes, resCarreras, resMateriales, resAsignaturas, resTotalSol] = await Promise.all([
             supabaseClient.rpc('get_total_usuarios'),
             supabaseClient.rpc('get_top_docentes'),
             supabaseClient.rpc('get_solicitudes_por_carrera'),
             supabaseClient.rpc('get_top_materiales', { material_filtro: null }),
             supabaseClient.rpc('get_consumo_por_asignatura', { asignatura_filtro: null, limite: 10 }),
-            supabaseClient.rpc('get_top_5_subjects_materials')
+            // CONSULTA DIRECTA A LA TABLA (Sin necesidad de RPC):
+            supabaseClient.from('solicitudes').select('*', { count: 'exact', head: true })
         ]);
 
         return {
@@ -307,7 +314,8 @@ async function cargarReportesEstadisticos() {
             carreras: resCarreras.data || [],
             materiales: resMateriales.data || [],
             asignaturas: resAsignaturas.data || [],
-            topAsignaturasMateriales: resTopAsigMat.data || []
+            // Guardamos el total obtenido por la consulta directa
+            totalSolicitudes: resTotalSol.count || 0 
         };
     } catch (err) {
         console.error("Error en cargarReportesEstadisticos:", err);
@@ -324,20 +332,25 @@ async function renderizarReportes() {
     const reportes = await cargarReportesEstadisticos();
     if (!reportes) return;
 
-    // KPI Usuarios
+    // KPI Usuarios (Ya lo tienes)
     const uEl = document.getElementById('usuariosCount');
     if (uEl) {
         const p = uEl.querySelector('p:first-child');
         if (p) p.textContent = Number(reportes.usuarios.total_usuarios).toLocaleString('es-ES');
     }
 
+    // --- NUEVO: KPI Total Solicitudes ---
+    const sEl = document.getElementById('solicitudesTotalCount');
+    if (sEl) {
+        const p = sEl.querySelector('p:first-child');
+        if (p) p.textContent = Number(reportes.totalSolicitudes).toLocaleString('es-ES');
+    }
+    // ------------------------------------
+
+    // El resto de tus gráficas se mantienen igual...
     crearBarraHorizontal('docentesChart', 'Solicitudes', reportes.docentes.map(d => d.docente), reportes.docentes.map(d => d.conteo_solicitudes), primaryColor);
-
-    // LLAMADA A DONA (Actualizada)
     crearDona('carrerasChart', reportes.carreras.map(c => c.carrera), reportes.carreras.map(c => c.conteo_solicitudes));
-
     crearBarraHorizontal('materialesChart', 'Veces Solicitado', reportes.materiales.map(m => m.material), reportes.materiales.map(m => m.veces_solicitado), secondaryColor);
-
     crearBarraHorizontal('asignaturasChart', 'Solicitudes', reportes.asignaturas.map(a => a.asignatura), reportes.asignaturas.map(a => a.numero_de_solicitudes), dangerColor);
 }
 
