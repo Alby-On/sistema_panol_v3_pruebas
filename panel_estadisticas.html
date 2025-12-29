@@ -50,6 +50,7 @@
             font-size: 1.4em;
             margin: 0;
             font-weight: 600;
+            color: white;
         }
 
         .header-info p {
@@ -58,7 +59,7 @@
             color: #b0c4de;
         }
 
-        /* Contenedor de Botones - Ajustado tras quitar el section-title */
+        /* Contenedor de Botones */
         .dashboard-header {
             padding: 30px 40px 20px 40px;
             display: flex;
@@ -104,7 +105,7 @@
             padding: 25px;
             border-radius: 12px;
             box-shadow: var(--shadow-subtle);
-            min-height: 450px;
+            min-height: 500px; /* Aumentado para evitar que se corte el contenido */
             display: flex;
             flex-direction: column;
             overflow: hidden;
@@ -121,18 +122,20 @@
             padding-bottom: 10px;
             margin-top: 0;
             margin-bottom: 20px;
+            font-weight: 700;
         }
 
         .canvas-wrapper {
             position: relative;
             flex-grow: 1;
             width: 100%;
+            height: 100%;
         }
 
         .comments-content {
             flex-grow: 1;
             overflow-y: auto;
-            max-height: 400px;
+            max-height: 450px;
         }
 
         @media (max-width: 768px) {
@@ -145,6 +148,7 @@
         @media print {
             header, .dashboard-header { display: none; }
             .dashboard-grid { padding: 0; }
+            .chart-container { page-break-inside: avoid; margin-bottom: 20px; }
         }
     </style>
 </head>
@@ -156,7 +160,7 @@
         </div>
         <div class="header-info">
             <h2>INACAP</h2>
-            <p>Área Energía, Electrónica, Automatización y Robótica</p>
+            <p>Área Energía y Área Automatización, Electrónica y Robótica</p>
         </div>
     </header>
 
@@ -197,6 +201,13 @@
             <h3>🔩 Materiales más Solicitados</h3>
             <div class="canvas-wrapper">
                 <canvas id="materialesChart"></canvas>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <h3>📚 Solicitudes por Asignatura</h3>
+            <div class="canvas-wrapper">
+                <canvas id="asignaturasChart"></canvas>
             </div>
         </div>
 
