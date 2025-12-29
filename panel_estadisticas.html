@@ -2,12 +2,11 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Panel de Estadísticas de Uso del Pañol</title>
+    <title>Estadísticas de Uso del Pañol</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        /* Variables de Color */
         :root {
             --color-primary: #004d99;
             --color-secondary: #28a745;
@@ -18,20 +17,18 @@
             --shadow-subtle: 0 4px 12px rgba(0, 0, 0, 0.08);
         }
 
-        /* Estilos Generales */
         body {
             font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: var(--color-background);
-            color: var(--color-text);
             margin: 0;
             padding: 0;
         }
 
-        /* BANNER AZUL CORPORATIVO */
+        /* Banner Azul Corporativo */
         header {
             background-color: #173753;
             color: white;
-            padding: 20px 40px; /* Margen interno original */
+            padding: 20px 40px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             display: flex;
             justify-content: space-between;
@@ -53,7 +50,6 @@
             font-size: 1.4em;
             margin: 0;
             font-weight: 600;
-            color: white;
         }
 
         .header-info p {
@@ -62,25 +58,14 @@
             color: #b0c4de;
         }
 
-        /* Título de la Sección */
-        .section-title {
-            text-align: center;
-            color: var(--color-primary);
-            margin: 30px 40px 10px 40px;
-            font-size: 2.2em;
-            font-weight: 800;
-        }
-
-        /* CONTENEDOR DE BOTONES ALINEADO AL BANNER (40px) */
+        /* Contenedor de Botones - Ajustado tras quitar el section-title */
         .dashboard-header {
-            padding: 20px 40px; /* Alineado con el padding del header */
+            padding: 30px 40px 20px 40px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-sizing: border-box;
         }
 
-        /* Estilos de Botones */
         .print-button, .menu-button {
             border: none;
             padding: 12px 25px;
@@ -88,52 +73,45 @@
             cursor: pointer;
             font-size: 1.05em;
             font-weight: 700;
-            transition: all 0.2s ease;
             text-decoration: none;
+            color: white;
             display: flex;
             align-items: center;
-            gap: 5px;
-            color: white;
+            gap: 8px;
+            transition: all 0.2s ease;
         }
 
-        .print-button {
-            background-color: var(--color-secondary);
-            box-shadow: 0 3px 8px rgba(40, 167, 69, 0.4);
-        }
-
-        .menu-button {
-            background-color: var(--color-menu);
-            box-shadow: 0 3px 8px rgba(108, 117, 125, 0.4);
-        }
+        .print-button { background-color: var(--color-secondary); }
+        .menu-button { background-color: var(--color-menu); }
 
         .print-button:hover, .menu-button:hover {
-            transform: translateY(-1px);
+            transform: translateY(-2px);
             filter: brightness(1.1);
         }
 
-        /* GRID DE GRÁFICOS ALINEADO AL BANNER (40px) */
+        /* Grid de Contenido */
         .dashboard-grid {
             display: grid;
             grid-template-columns: 1fr;
-            gap: 25px;
-            padding: 0 40px 40px 40px; /* Alineado con los 40px del banner */
+            gap: 30px;
+            padding: 0 40px 40px 40px;
+            max-width: 1400px;
             margin: 0 auto;
         }
 
         .chart-container {
             background: var(--color-card);
-            padding: 20px;
+            padding: 25px;
             border-radius: 12px;
             box-shadow: var(--shadow-subtle);
-            height: 600px;
+            min-height: 450px;
             display: flex;
             flex-direction: column;
-            transition: transform 0.3s ease;
+            overflow: hidden;
         }
 
-        .chart-container:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+        .chart-container.stats-mini {
+            min-height: 180px;
         }
 
         h3 {
@@ -141,29 +119,31 @@
             font-size: 1.3em;
             border-bottom: 2px solid #e0e0e0;
             padding-bottom: 10px;
-            margin-bottom: 15px;
-            font-weight: 700;
+            margin-top: 0;
+            margin-bottom: 20px;
+        }
+
+        .canvas-wrapper {
+            position: relative;
+            flex-grow: 1;
+            width: 100%;
         }
 
         .comments-content {
             flex-grow: 1;
             overflow-y: auto;
+            max-height: 400px;
         }
 
-        /* Ajustes para móviles */
         @media (max-width: 768px) {
-            header {
-                flex-direction: column;
-                text-align: center;
-                padding: 20px;
-            }
-            .header-info { text-align: center; margin-top: 10px; }
-            .dashboard-header, .dashboard-grid { padding: 20px; }
-            .section-title { font-size: 1.8em; margin: 20px; }
+            header, .dashboard-header { padding: 20px; flex-direction: column; text-align: center; }
+            .header-info { margin-top: 10px; }
+            .dashboard-header { gap: 15px; }
+            .dashboard-grid { padding: 15px; }
         }
 
         @media print {
-            .dashboard-header, header { display: none; }
+            header, .dashboard-header { display: none; }
             .dashboard-grid { padding: 0; }
         }
     </style>
@@ -172,7 +152,7 @@
 
     <header>
         <div class="header-title">
-            <h2 class="section-title"> Estadísticas de Uso del Pañol</h2>
+            <h1>Estadísticas de uso del pañol</h1>
         </div>
         <div class="header-info">
             <h2>INACAP</h2>
@@ -182,18 +162,18 @@
 
     <div class="dashboard-header">
         <a href="menu.html" class="menu-button">
-            ⬅️ Volver al Menú
+            <span>⬅️</span> Volver al Menú
         </a>
         <button class="print-button" onclick="window.print()">
-            🖨️ Imprimir reporte
+            <span>🖨️</span> Imprimir reporte
         </button>
     </div>
 
     <div class="dashboard-grid">
         
-        <div class="chart-container" style="height: 200px;">
+        <div class="chart-container stats-mini">
             <h3>👥 Usuarios Registrados</h3>
-            <div id="usuariosCount" style="text-align: center; display: flex; flex-direction: column; flex-grow: 1; justify-content: center;">
+            <div id="usuariosCount" style="text-align: center; display: flex; flex-direction: column; justify-content: center; flex-grow: 1;">
                 <p style="font-size: 4em; color: var(--color-primary); font-weight: 800; margin: 0;">0</p>
                 <p style="font-size: 1.2em; color: var(--color-text); margin: 0;">Total en el Sistema</p>
             </div>
@@ -201,22 +181,23 @@
 
         <div class="chart-container">
             <h3>🥇 Top 10 Docentes Solicitantes</h3>
-            <canvas id="docentesChart"></canvas>
+            <div class="canvas-wrapper">
+                <canvas id="docentesChart"></canvas>
+            </div>
         </div>
 
         <div class="chart-container">
-            <h3>🏛️ Solicitudes por carrera</h3>
-            <canvas id="carrerasChart"></canvas>
+            <h3>🏛️ Solicitudes por Carrera</h3>
+            <div class="canvas-wrapper">
+                <canvas id="carrerasChart"></canvas>
+            </div>
         </div>
 
         <div class="chart-container">
-            <h3>🔩 Materiales más solicitados</h3>
-            <canvas id="materialesChart"></canvas>
-        </div>
-
-        <div class="chart-container">
-            <h3>📚 Solicitudes por asignatura</h3>
-            <canvas id="asignaturasChart"></canvas>
+            <h3>🔩 Materiales más Solicitados</h3>
+            <div class="canvas-wrapper">
+                <canvas id="materialesChart"></canvas>
+            </div>
         </div>
 
         <div class="chart-container">
