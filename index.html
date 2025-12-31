@@ -396,11 +396,14 @@ async function registrar() {
         return;
     }
 
-    const rutVal = validarRutCompleto(rut);
+      const rutVal = validarRutCompleto(rut);
     if (!rutVal.ok) {
-        rutError.textContent = rutVal.msg;
-        return;
+        mensaje.textContent = `❌ ${rutVal.msg}`;
+        mensaje.style.color = "red";
+        mensaje.style.backgroundColor = "#ffdddd";
+    return;
     }
+
 
     if (!/^\+569\d{8}$/.test(telefono)) {
         showError("Teléfono inválido. Use +569XXXXXXXX");
